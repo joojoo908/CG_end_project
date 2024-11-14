@@ -14,6 +14,7 @@
 
 void InitBuffer(const Model& model);
 bool loadOBJ(const std::string& filename, Model& model);
+
 GLvoid drawScene();
 void Keyboard(unsigned char key, int x, int y);
 void SpecialKeyboard(int key, int x, int y);
@@ -37,7 +38,7 @@ Vertex vertex_spin(Vertex eye, Vertex& at, Vertex spin) {
 	glm::mat4 Ry = glm::mat4(1.0f); //--- 회전 행렬 선언
 	glm::mat4 Rz = glm::mat4(1.0f); //--- 회전 행렬 선언
 
-	Rx = glm::rotate(Rx, glm::radians(spin.x), glm::vec3(-1.0, 0.0, 0.0));
+	Rx = glm::rotate(Rx, glm::radians(spin.x), glm::vec3(1.0, 0.0, 0.0));
 	Ry = glm::rotate(Ry, glm::radians(spin.y), glm::vec3(0.0, 1.0, 0.0));
 	Rz = glm::rotate(Rz, glm::radians(spin.z), glm::vec3(0.0, 0.0, 1.0));
 
@@ -58,21 +59,9 @@ Vertex vertex_spin(Vertex eye, Vertex& at, Vertex spin) {
 }
 class Camera {
 private:
-	Vertex eye = { 0,3,5 };
+	Vertex eye = { 0,3,10 };
 	Vertex at = { 0,0,0 };
-	GLint vi[2] = { 0,0 };
-	GLsizei sz[2] = { 1000,800 };
 public:
-	void camera_setting(Vertex eye, Vertex at) {
-		this->eye = eye;
-		this->at = at;
-	}
-	void view_setting(GLint x, GLint y, GLsizei sz_x, GLsizei sz_y) {
-		vi[0] = x;
-		vi[1] = y;
-		sz[0] = sz_x;
-		sz[1] = sz_y;
-	}
 	void moving(float fb, float lr) {
 		Vertex m_v = subtract(eye, at);
 		m_v = { m_v.x / len(m_v,{}),m_v.y / len(m_v,{}) ,m_v.z / len(m_v,{}) };
@@ -93,7 +82,7 @@ public:
 	}
 	void spin(float x, float y, float z) {
 		Vertex rotatex = { 0,atan(x),0 };
-		Vertex rotatey = { sin(atan2(eye.z - at.z,eye.x - at.x)) * atan(y), 0 , -cos(atan2(eye.z - at.z,eye.x - at.x)) * atan(y) };
+		Vertex rotatey = { sin(atan2(eye.z - at.z,eye.x - at.x)) * -atan(y), 0 , -cos(atan2(eye.z - at.z,eye.x - at.x)) * -atan(y) };
 
 		vertex_spin(eye, at, rotatex);
 		vertex_spin(eye, at, rotatey);
@@ -104,6 +93,7 @@ public:
 	}
 	void view() { //원근투영
 		glm::vec3 Pos = glm::vec3(eye.x, eye.y, eye.z); //--- 카메라 위치
+		//Vertex n = vertex_spin(eye, at, look);
 		glm::vec3 At = glm::vec3(at.x, at.y, at.z); //--- 카메라 바라보는 방향
 		glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f); //--- 카메라 위쪽 방향
 		glm::mat4 view = glm::mat4(1.0f);
@@ -118,7 +108,25 @@ public:
 		unsigned int projectionLocation = glGetUniformLocation(Shader::return_id(), "projection"); //--- 투영 변환 값 설정
 		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projection[0][0]);
 
-		glViewport(vi[0], vi[1], sz[0], sz[1]);
+		//glViewport(400, 0, 400, 400);
+	}
+	void view2() { //직각투영
+		glm::vec3 Pos = glm::vec3(eye.x, eye.y, eye.z); //--- 카메라 위치
+		//Vertex n = vertex_spin(eye, at, look);
+		glm::vec3 At = glm::vec3(at.x, at.y, at.z); //--- 카메라 바라보는 방향
+		glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f); //--- 카메라 위쪽 방향
+		glm::mat4 view = glm::mat4(1.0f);
+		view = glm::lookAt(Pos, At, Up);
+
+		unsigned int viewLocation = glGetUniformLocation(Shader::return_id(), "view"); //--- 뷰잉 변환 설정
+		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
+
+		glm::mat4 projection = glm::mat4(1.0f);
+		float ort = 10;
+		projection = glm::ortho(-ort, ort, -ort, ort, -ort, ort);
+
+		unsigned int projectionLocation = glGetUniformLocation(Shader::return_id(), "projection"); //--- 투영 변환 값 설정
+		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projection[0][0]);
 	}
 };
 Color RED = { 1, 0, 0 };
@@ -316,10 +324,6 @@ void TimerFunction(int value)
 	glutTimerFunc(Timerspeed, TimerFunction, 1); // 타이머함수 재 설정
 
 }
-
-
-//-------------------------------------------------------------------------
-
 
 //-------------------------------------------------------------------------------
 void InitBuffer(const Model& model) {
