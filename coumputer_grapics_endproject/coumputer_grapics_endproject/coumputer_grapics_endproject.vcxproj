@@ -18,6 +18,53 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="Animator.cpp" />
+    <ClCompile Include="Bone.cpp" />
+    <ClCompile Include="CameraBase.cpp" />
+    <ClCompile Include="DirectionalLight.cpp" />
+    <ClCompile Include="Entity.cpp" />
+    <ClCompile Include="FrameBuffer.cpp" />
+    <ClCompile Include="FreeCamera.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="Model.cpp" />
+    <ClCompile Include="PointLight.cpp" />
+    <ClCompile Include="ScenePanel.cpp" />
+    <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="stb_image.cpp" />
+    <ClCompile Include="Texture.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Animation.h" />
+    <ClInclude Include="Animator.h" />
+    <ClInclude Include="AssimpGLMHelpers.h" />
+    <ClInclude Include="Bone.h" />
+    <ClInclude Include="CameraBase.h" />
+    <ClInclude Include="CommonValues.h" />
+    <ClInclude Include="DirectionalLight.h" />
+    <ClInclude Include="Entity.h" />
+    <ClInclude Include="FrameBuffer.h" />
+    <ClInclude Include="FreeCamera.h" />
+    <ClInclude Include="Light.h" />
+    <ClInclude Include="Material.h" />
+    <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Model.h" />
+    <ClInclude Include="ScenePanel.h" />
+    <ClInclude Include="Shader.h" />
+    <ClInclude Include="stb_image.h" />
+    <ClInclude Include="Texture.h" />
+    <ClInclude Include="Vertex.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\..\..\assimp\lib\assimp-vc143-mt.lib" />
+    <Library Include="..\..\..\..\assimp\lib\assimp-vc143-mtd.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="fragment.glsl" />
+    <None Include="vertex.glsl" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -126,20 +173,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <None Include="fragment.glsl" />
-    <None Include="vertex.glsl" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="funk_ldj.cpp" />
-    <ClCompile Include="shader.cpp" />
-    <ClCompile Include="window.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="frame_work.h" />
-    <ClInclude Include="funk_ldj.h" />
-    <ClInclude Include="shader.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

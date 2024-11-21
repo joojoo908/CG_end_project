@@ -1,87 +1,269 @@
-#include"shader.h"
+#include "Shader.h"
 
-GLuint Shader::shaderID = 0;
+#include "DirectionalLight.h"
+#include "Material.h"
+#include "PointLight.h"
 
-Shader::Shader() {
-	make_shaderProgram();
-}
-
-GLuint& Shader::return_id() {
-	return shaderID;
-}
-
-char* Shader::filetobuf(const char* file)
+Shader::Shader()
 {
-	FILE* fptr;
-	long length;
-	char* buf;
-	fptr = fopen(file, "rb"); // Open file for reading
-	if (!fptr) // Return NULL on failure
-		return NULL;
-	fseek(fptr, 0, SEEK_END); // Seek to the end of the file
-	length = ftell(fptr); // Find out how many bytes into the file we are
-	buf = (char*)malloc(length + 1); // Allocate a buffer for the entire length of the file and a null terminator
-	fseek(fptr, 0, SEEK_SET); // Go back to the beginning of the file
-	fread(buf, length, 1, fptr); // Read the contents of the file in to the buffer
-	fclose(fptr); // Close the file
-	buf[length] = 0; // Null terminator
-	return buf; // Return the buffer
+	shaderID = 0;
+
+	modelMatLoc = 0;
+	PVMLoc = 0;
+	colorSamplerLoc = 0;
+	normalSamplerLoc = 0;
+	normalMatLoc = 0;
 }
-void Shader::make_vertexShaders()
+
+void Shader::CreateFromFiles(const char* vertexLocation, const char* fragmentLocation,
+	const char* geometryLocation, const char* tessControlLocation,
+	const char* tessEvalLocation)
 {
-	GLchar* vertexSource;
-	//--- 버텍스 세이더 읽어 저장하고 컴파일 하기
-	//--- filetobuf: 사용자정의 함수로 텍스트를 읽어서 문자열에 저장하는 함수
-	vertexSource = Shader::filetobuf("vertex.glsl");
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexSource, NULL);
-	glCompileShader(vertexShader);
-	GLint result;
-	GLchar errorLog[512];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &result);
-	if (!result)
+	std::string vertexStr = ReadFile(vertexLocation).c_str();
+	const char* vertexCode = vertexStr.c_str();
+
+	std::string fragmentStr = ReadFile(fragmentLocation).c_str();
+	const char* fragmentCode = fragmentStr.c_str();
+
+	const char* geometryCode = nullptr;
+	std::string geometryStr = "";
+	if (geometryLocation)
 	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, errorLog);
-		std::cerr << "ERROR: vertex shader 컴파일 실패\n" << errorLog << std::endl;
+		geometryStr = ReadFile(geometryLocation).c_str();
+		geometryCode = geometryStr.c_str();
+	}
+
+	const char* tessControlCode = nullptr;
+	std::string tessControlStr = "";
+	if (tessControlLocation)
+	{
+		tessControlStr = ReadFile(tessControlLocation).c_str();
+		tessControlCode = tessControlStr.c_str();
+	}
+
+	const char* tessEvalCode = nullptr;
+	std::string tessEvalStr = "";
+	if (tessEvalLocation)
+	{
+		tessEvalStr = ReadFile(tessEvalLocation).c_str();
+		tessEvalCode = tessEvalStr.c_str();
+	}
+
+	CompileShader(vertexCode, fragmentCode, geometryCode, tessControlCode, tessEvalCode);
+}
+
+std::string Shader::ReadFile(const char* fileLocation)
+{
+	std::string content;
+	std::ifstream fileStream(fileLocation, std::ios::in);
+
+	if (!fileStream.is_open())
+	{
+		printf("Failed to read %s! File doesn't exist.", fileLocation);
+		return "";
+	}
+
+	std::string line = "";
+	while (!fileStream.eof())
+	{
+		std::getline(fileStream, line);
+		content.append(line + "\n");
+	}
+
+	fileStream.close();
+	return content;
+}
+
+void Shader::CompileShader(const char* vertexCode, const char* fragmentCode,
+	const char* geometryCode, const char* tessControlCode,
+	const char* tessEvalCode)
+{
+	shaderID = glCreateProgram();
+
+	if (!shaderID)
+	{
+		printf("Error creating shader program!\n");
+		assert(0);
 		return;
 	}
-}
-void Shader::make_fragmentShaders()
-{
-	GLchar* fragmentSource;
-	//--- 프래그먼트 세이더 읽어 저장하고 컴파일하기
-	fragmentSource = filetobuf("fragment.glsl"); // 프래그세이더 읽어오기
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
-	glCompileShader(fragmentShader);
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &result);
+
+	AddShader(shaderID, vertexCode, GL_VERTEX_SHADER);
+	AddShader(shaderID, fragmentCode, GL_FRAGMENT_SHADER);
+	if (geometryCode)
+		AddShader(shaderID, geometryCode, GL_GEOMETRY_SHADER);
+	if (tessControlCode)
+		AddShader(shaderID, tessControlCode, GL_TESS_CONTROL_SHADER);
+	if (tessEvalCode)
+		AddShader(shaderID, tessEvalCode, GL_TESS_EVALUATION_SHADER);
+
+	GLint result = 0;
+	GLchar eLog[1024] = { 0 };
+
+	glLinkProgram(shaderID);
+	glGetProgramiv(shaderID, GL_LINK_STATUS, &result);
 	if (!result)
 	{
-		glGetShaderInfoLog(fragmentShader, 512, NULL, errorLog);
-		std::cerr << "ERROR: frag_shader 컴파일 실패\n" << errorLog << std::endl;
+		glGetProgramInfoLog(shaderID, sizeof(eLog), NULL, eLog);
+		printf("Error linking program: '%s'\n", eLog);
 		return;
 	}
-}
-GLuint Shader::make_shaderProgram()
-{
-	make_vertexShaders(); //--- 버텍스 세이더 만들기
-	make_fragmentShaders(); //--- 프래그먼트 세이더 만들기
 
-	shaderID = glCreateProgram(); //--- 세이더 프로그램 만들기
-	glAttachShader(shaderID, vertexShader); //--- 세이더 프로그램에 버텍스 세이더 붙이기
-	glAttachShader(shaderID, fragmentShader); //--- 세이더 프로그램에 프래그먼트 세이더 붙이기
-	glLinkProgram(shaderID); //--- 세이더 프로그램 링크하기
-	glDeleteShader(vertexShader); //--- 세이더 객체를 세이더 프로그램에 링크했음으로, 세이더 객체 자체는 삭제 가능
-	glDeleteShader(fragmentShader);
-	glGetProgramiv(shaderID, GL_LINK_STATUS, &result); // ---세이더가 잘 연결되었는지 체크하기
-	if (!result) {
-		glGetProgramInfoLog(shaderID, 512, NULL, errorLog);
-		std::cerr << "ERROR: shader program 연결 실패\n" << errorLog << std::endl;
-		return false;
+	glValidateProgram(shaderID);
+	glGetProgramiv(shaderID, GL_VALIDATE_STATUS, &result);
+	if (!result)
+	{
+		glGetProgramInfoLog(shaderID, sizeof(eLog), NULL, eLog);
+		printf("Error validating program: '%s'\n", eLog);
+		return;
 	}
-	glUseProgram(shaderID); //--- 만들어진 세이더 프로그램 사용하기
-	//--- 여러 개의 세이더프로그램 만들 수 있고, 그 중 한개의 프로그램을 사용하려면
-	//--- glUseProgram 함수를 호출하여 사용 할 특정 프로그램을 지정한다.
-	//--- 사용하기 직전에 호출할 수 있다.
-	return shaderID;
+
+	// 쉐이더 컴파일 성공, 쉐이더 내부 변수들 위치 가져오기
+	GetVariableLocations();
+}
+
+void Shader::UseShader()
+{
+	glUseProgram(shaderID);
+}
+
+void Shader::ClearShader()
+{
+	if (shaderID != 0)
+	{
+		glDeleteProgram(shaderID);
+		shaderID = 0;
+	}
+}
+
+void Shader::GetVariableLocations()
+{
+	modelMatLoc = glGetUniformLocation(shaderID, "modelMat");
+	PVMLoc = glGetUniformLocation(shaderID, "PVM");
+	colorSamplerLoc = glGetUniformLocation(shaderID, "colorSampler");
+	normalSamplerLoc = glGetUniformLocation(shaderID, "normalSampler");
+	normalMatLoc = glGetUniformLocation(shaderID, "normalMat");
+
+	directionalLightLoc.ambientIntensityLoc = glGetUniformLocation(shaderID, "directionalLight.base.ambientIntensity");
+	directionalLightLoc.diffuseIntensityLoc = glGetUniformLocation(shaderID, "directionalLight.base.diffuseIntensity");
+	directionalLightLoc.colorLoc = glGetUniformLocation(shaderID, "directionalLight.base.color");
+	directionalLightLoc.directionLoc = glGetUniformLocation(shaderID, "directionalLight.direction");
+
+	materialLoc.specularIntensityLoc = glGetUniformLocation(shaderID, "material.specularIntensity");
+	materialLoc.shininessLoc = glGetUniformLocation(shaderID, "material.shininess");
+
+	eyePosLoc = glGetUniformLocation(shaderID, "eyePosition");
+	finalBonesMatricesLoc = glGetUniformLocation(shaderID, "finalBonesMatrices");
+
+	for (int i = 0; i < MAX_POINT_LIGHTS; i++)
+	{
+		char locbuff[100] = { '\0' };
+
+		snprintf(locbuff, sizeof(locbuff), "pointLights[%d].base.ambientIntensity", i);
+		pointLightLoc[i].ambientIntensityLoc = glGetUniformLocation(shaderID, locbuff);
+
+		snprintf(locbuff, sizeof(locbuff), "pointLights[%d].base.diffuseIntensity", i);
+		pointLightLoc[i].diffuseIntensityLoc = glGetUniformLocation(shaderID, locbuff);
+
+		snprintf(locbuff, sizeof(locbuff), "pointLights[%d].base.color", i);
+		pointLightLoc[i].colorLoc = glGetUniformLocation(shaderID, locbuff);
+
+		snprintf(locbuff, sizeof(locbuff), "pointLights[%d].position", i);
+		pointLightLoc[i].positionLoc = glGetUniformLocation(shaderID, locbuff);
+
+		snprintf(locbuff, sizeof(locbuff), "pointLights[%d].constant", i);
+		pointLightLoc[i].constantLoc = glGetUniformLocation(shaderID, locbuff);
+
+		snprintf(locbuff, sizeof(locbuff), "pointLights[%d].linear", i);
+		pointLightLoc[i].linearLoc = glGetUniformLocation(shaderID, locbuff);
+
+		snprintf(locbuff, sizeof(locbuff), "pointLights[%d].exponent", i);
+		pointLightLoc[i].exponentLoc = glGetUniformLocation(shaderID, locbuff);
+	}
+	pointLightCountLoc = glGetUniformLocation(shaderID, "pointLightCount");
+}
+
+void Shader::UseDirectionalLight(DirectionalLight* light)
+{
+	glUniform1f(directionalLightLoc.ambientIntensityLoc, light->ambientIntensity);
+	glUniform1f(directionalLightLoc.diffuseIntensityLoc, light->diffuseIntensity);
+	glUniform4f(directionalLightLoc.colorLoc,
+		light->color.r,
+		light->color.g,
+		light->color.b,
+		light->color.a);
+	glUniform3f(directionalLightLoc.directionLoc,
+		light->direction.x,
+		light->direction.y,
+		light->direction.z);
+}
+
+void Shader::UsePointLights(PointLight** pointLights, unsigned int count)
+{
+	glUniform1i(pointLightCountLoc, count);
+	for (int i = 0; i < count; i++)
+	{
+		glUniform1f(pointLightLoc[i].ambientIntensityLoc, pointLights[i]->ambientIntensity);
+		glUniform1f(pointLightLoc[i].diffuseIntensityLoc, pointLights[i]->diffuseIntensity);
+		glUniform4f(pointLightLoc[i].colorLoc,
+			pointLights[i]->color.r,
+			pointLights[i]->color.g,
+			pointLights[i]->color.b,
+			pointLights[i]->color.a);
+		glUniform3f(pointLightLoc[i].positionLoc,
+			pointLights[i]->position.x,
+			pointLights[i]->position.y,
+			pointLights[i]->position.z);
+		glUniform1f(pointLightLoc[i].constantLoc, pointLights[i]->constant);
+		glUniform1f(pointLightLoc[i].linearLoc, pointLights[i]->linear);
+		glUniform1f(pointLightLoc[i].exponentLoc, pointLights[i]->exponent);
+	}
+}
+
+void Shader::UseMaterial(Material* material)
+{
+	glUniform1f(materialLoc.specularIntensityLoc, material->specular);
+	glUniform1f(materialLoc.shininessLoc, material->shininess);
+}
+
+void Shader::UseFinalBoneMatrices(const std::vector<glm::mat4>& transforms)
+{
+	for (int i = 0; i < transforms.size(); i++)
+		glUniformMatrix4fv(finalBonesMatricesLoc + i, 1, false, glm::value_ptr(transforms[i]));
+}
+
+void Shader::UseEyePos(glm::vec3 pos)
+{
+	glUniform3f(eyePosLoc, pos.x, pos.y, pos.z);
+}
+
+void Shader::AddShader(GLuint theProgram, const char* shaderCode, GLenum shaderType)
+{
+	GLuint theShader = glCreateShader(shaderType);
+
+	const GLchar* theCode[1];
+	theCode[0] = shaderCode;
+
+	GLint codeLength[1];
+	codeLength[0] = strlen(shaderCode);
+
+	glShaderSource(theShader, 1, theCode, codeLength);
+	glCompileShader(theShader);
+
+	GLint result = 0;
+	GLchar eLog[1024] = { 0 };
+
+	glGetShaderiv(theShader, GL_COMPILE_STATUS, &result);
+	if (!result)
+	{
+		glGetShaderInfoLog(theShader, sizeof(eLog), NULL, eLog);
+		printf("Error compiling the %d shader: '%s'\n", shaderType, eLog);
+		return;
+	}
+
+	glAttachShader(theProgram, theShader);
+}
+
+Shader::~Shader()
+{
+	ClearShader();
 }
