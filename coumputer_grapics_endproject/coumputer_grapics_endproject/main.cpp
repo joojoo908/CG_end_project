@@ -8,23 +8,20 @@
 #include <gl/glm/gtc/matrix_transform.hpp>
 #include <gl/glm/gtc/type_ptr.hpp>
 
-
 #include <assimp/Importer.hpp>
 
-//#include "Camera.h"
 #include "Mesh.h"
 #include "Shader.h"
-//#include "Window.h"
 #include "Model.h"
 #include "Animation.h"
 #include "Animator.h"
-//#include "ScenePanel.h"
 #include "FrameBuffer.h"
 #include "FreeCamera.h"
 #include "DirectionalLight.h"
 #include "PointLight.h"
 #include "Player.h"
 #include "PlayerCamera.h"
+#include "Skybox.h"
 
 #define WIDTH 1280
 #define HEIGHT 720
@@ -70,7 +67,7 @@ DirectionalLight* directionalLight;
 PointLight* pointLights[MAX_POINT_LIGHTS];
 unsigned int pointLightCount = 0;
 
-//ScenePanel* scenePanel;
+Skybox* skybox;
 
 // Shader handles
 GLuint loc_modelMat = 0;
@@ -209,6 +206,75 @@ void update() {
     currCamera->Update();
 }
 
+void mainInit() {
+    CreateShader();
+
+    //빛
+    directionalLight = new DirectionalLight(0.5f, 1.f,
+        glm::vec4(1.f, 1.f, 1.f, 1.f),
+        glm::vec3(0.f, 1.f, 1.f));
+    entityList.push_back(directionalLight);
+
+    pointLights[0] = new PointLight
+    (0.f, 0.5f,
+        glm::vec4(1.f, 1.f, 1.f, 1.f),
+        glm::vec3(0.f, 1.5f, 0.2f),
+        1.0f, 0.22f, 0.20f);
+    pointLightCount++;
+    pointLights[1] = new PointLight
+    (0.0f, 0.5f,
+        glm::vec4(1.f, 1.f, 1.f, 1.f),
+        glm::vec3(-2.0f, 2.0f, -1.f),
+        1.0, 0.045f, 0.0075f);
+    pointLightCount++;
+    for (int i = 0; i < pointLightCount; i++)
+        entityList.push_back(pointLights[i]);
+
+    // Skybox
+    std::vector<std::string> skyboxFaces;
+    skyboxFaces.push_back("Skybox/px.png");
+    skyboxFaces.push_back("Skybox/nx.png");
+    skyboxFaces.push_back("Skybox/py.png");
+    skyboxFaces.push_back("Skybox/ny.png");
+    skyboxFaces.push_back("Skybox/pz.png");
+    skyboxFaces.push_back("Skybox/nz.png");
+    skybox = new Skybox(skyboxFaces);
+
+    // Model loading
+    mainModel = new Model();
+    std::string modelPath = "Knight/test.gltf";
+    //std::string modelPath = "Bot/bot_run.gltf";
+    mainModel->LoadModel(modelPath);
+    entityList.push_back(mainModel);
+    currModel = mainModel;
+
+    //모델 90도 회전
+    GLfloat* currRot = mainModel->GetRotate();
+    float rotation = 90;
+    float newRotx = currRot[0] + rotation;
+    glm::vec3 newRot(newRotx, currRot[1], currRot[2]);
+    mainModel->SetRotate(newRot);
+
+    //플레이어 연결
+    player = new Player(mainModel);
+
+    freeCamera = new FreeCamera(glm::vec3(0.f, 0.f, 2.f), 100.f, 0.3f);
+    playerCamera = new PlayerCamera(player);
+    currCamera = freeCamera;
+
+    //GLfloat initialPitch = 0.f;
+    //GLfloat initialYaw = -90.f; // 카메라가 -z축을 보고 있도록
+    //camera = new Camera(glm::vec3(0.f, 0.f, 20.f), glm::vec3(0.f, 1.f, 0.f), initialYaw, initialPitch, 10.f, 0.3f);
+
+    //idleAnim = new Animation("robot_run.fbx", currModel);
+    //idleAnim = new Animation("Bot/bot_run.gltf", currModel);
+    idleAnim = new Animation("Knight/idle.gltf", currModel);
+    danceAnim = new Animation("Knight/dance.gltf", currModel);
+    runAnim = new Animation("Knight/run.gltf", currModel);
+
+    animator = new Animator(nullptr);
+}
+
 GLvoid render()
 {
     update();
@@ -232,8 +298,9 @@ GLvoid render()
     glm::mat4 projMat = currCamera->GetProjectionMatrix(1280, 720);
     glm::vec3 camPos = currCamera->GetPosition();
 
-    /*skybox->DrawSkybox(viewMat, projMat);
+    skybox->DrawSkybox(viewMat, projMat);
 
+    /*
     terrain->UseShader();
     terrain->GetShader()->UseDirectionalLight(directionalLight);
     terrain->GetShader()->UsePointLights(pointLights, pointLightCount);
@@ -294,70 +361,7 @@ int main(int argc, char** argv)
     // Initialize GLEW
     glewInit();
 
-    /*mainWindow = new Window(WIDTH, HEIGHT);
-    mainWindow->Initialise();*/
-
-
-    CreateShader();
-
-    directionalLight = new DirectionalLight(0.5f, 1.f,
-        glm::vec4(1.f, 1.f, 1.f, 1.f),
-        glm::vec3(0.f, 1.f, 1.f));
-    entityList.push_back(directionalLight);
-
-    pointLights[0] = new PointLight
-    (0.f, 0.5f,
-        glm::vec4(1.f, 1.f, 1.f, 1.f),
-        glm::vec3(0.f, 1.5f, 0.2f),
-        1.0f, 0.22f, 0.20f);
-    pointLightCount++;
-    pointLights[1] = new PointLight
-    (0.0f, 0.5f,
-        glm::vec4(1.f, 1.f, 1.f, 1.f),
-        glm::vec3(-2.0f, 2.0f, -1.f),
-        1.0, 0.045f, 0.0075f);
-    pointLightCount++;
-    for (int i = 0; i < pointLightCount; i++)
-        entityList.push_back(pointLights[i]);
-
-    // Model loading
-    mainModel = new Model();
-    std::string modelPath = "Knight/test.gltf";
-    //std::string modelPath = "Bot/bot_run.gltf";
-    mainModel->LoadModel(modelPath);
-    entityList.push_back(mainModel);
-    currModel = mainModel;
-
-    //모델 90도 회전
-    GLfloat* currRot = mainModel->GetRotate();
-    float rotation = 90;
-    float newRotx = currRot[0] + rotation;
-    glm::vec3 newRot(newRotx, currRot[1], currRot[2]);
-    mainModel->SetRotate(newRot);
-
-    //플레이어 연결
-    player = new Player(mainModel);
-
-    freeCamera = new FreeCamera(glm::vec3(0.f, 0.f, 2.f), 100.f, 0.3f);
-    playerCamera = new PlayerCamera(player);
-    currCamera = freeCamera;
-
-    //GLfloat initialPitch = 0.f;
-    //GLfloat initialYaw = -90.f; // 카메라가 -z축을 보고 있도록
-    //camera = new Camera(glm::vec3(0.f, 0.f, 20.f), glm::vec3(0.f, 1.f, 0.f), initialYaw, initialPitch, 10.f, 0.3f);
-
-    //idleAnim = new Animation("robot_run.fbx", currModel);
-    //idleAnim = new Animation("Bot/bot_run.gltf", currModel);
-    idleAnim = new Animation("Knight/idle.gltf", currModel);
-    danceAnim = new Animation("Knight/dance.gltf", currModel);
-    runAnim = new Animation("Knight/run.gltf", currModel);
-
-    animator = new Animator(nullptr);
-
-
-    //FrameBuffer sceneBuffer(mainWindow->getBufferWidth(), mainWindow->getBufferHeight());
-    //mainWindow->SetSceneBuffer(&sceneBuffer);
-
+    mainInit();
 
     // Set callbacks
     glutDisplayFunc(render);

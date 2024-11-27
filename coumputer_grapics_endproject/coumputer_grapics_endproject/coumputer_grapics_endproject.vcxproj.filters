@@ -69,6 +69,9 @@
     <ClCompile Include="PlayerCamera.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Skybox.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vertex.h">
@@ -134,12 +137,12 @@
     <ClInclude Include="PlayerCamera.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Skybox.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="vertex.glsl">
-      <Filter>소스 파일</Filter>
-    </None>
-    <None Include="fragment.glsl">
       <Filter>소스 파일</Filter>
     </None>
     <None Include="Shader\fragment.glsl">
