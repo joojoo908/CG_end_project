@@ -23,6 +23,8 @@
 #include "PlayerCamera.h"
 #include "Skybox.h"
 
+#include "ShaderHandle.h"
+
 #define WIDTH 1280
 #define HEIGHT 720
 
@@ -40,19 +42,13 @@ PlayerCamera* playerCamera;
 GLfloat deltaTime = 0.f;
 GLfloat lastTime = 0.f;
 
-// Vertex Shader
-static const char* vShaderPath = "Shader/vertex.glsl";
-
-// Fragment Shader
-static const char* fShaderPath = "Shader/fragment.glsl";
-
 std::vector<Mesh*> meshList;
-std::vector<Shader*> shaderList;
 std::vector<Entity*> entityList;
 
 
 //Model* model_2B;
 Model* mainModel;
+Model* cube;
 Model* currModel;
 
 Player* player;
@@ -69,39 +65,13 @@ unsigned int pointLightCount = 0;
 
 Skybox* skybox;
 
-// Shader handles
-GLuint loc_modelMat = 0;
-GLuint loc_PVM = 0;
-GLuint loc_diffuseSampler = 0;
-GLuint loc_normalSampler = 0;
-GLuint loc_normalMat = 0;
-GLuint loc_eyePos = 0;
-GLuint loc_finalBonesMatrices = 0;
-
-glm::mat3 GetNormalMat(glm::mat4& modelMat)
-{
-    return glm::mat3(glm::transpose(glm::inverse(modelMat)));
-}
-// Shader creation
-void CreateShader()
-{
-    Shader* shader = new Shader;
-    shader->CreateFromFiles(vShaderPath, fShaderPath);
-    shaderList.push_back(shader);
-}
-
-void GetShaderHandles()
-{
-    // Get shader handles
-    loc_modelMat = shaderList[0]->GetModelMatLoc();
-    loc_PVM = shaderList[0]->GetPVMLoc();
-    loc_normalMat = shaderList[0]->GetNormalMatLoc();
-    loc_eyePos = shaderList[0]->GetEyePosLoc();
-    loc_finalBonesMatrices = shaderList[0]->GetFinalBonesMatricesLoc();
-    loc_diffuseSampler = shaderList[0]->GetColorSamplerLoc();
-    loc_normalSampler = shaderList[0]->GetNormalSamplerLoc();
-}
-
+extern GLuint loc_modelMat;
+extern GLuint loc_PVM;
+extern GLuint loc_diffuseSampler;
+extern GLuint loc_normalSampler;
+extern GLuint loc_normalMat;
+extern GLuint loc_eyePos;
+extern GLuint loc_finalBonesMatrices;
 // Keyboard and mouse control
 
 void TimerFunction(int value);
@@ -187,9 +157,11 @@ void handleResize(int w, int h) {
     glViewport(0, 0, w, h);
 }
 
+//--------------------------------
+
 void update() {
 
-    if (player->Move(deltaTime))
+    /*if (player->Move(deltaTime))
     {
         if (animator->GetCurrAnimation() != runAnim)
             animator->PlayAnimation(runAnim);
@@ -201,14 +173,15 @@ void update() {
     }
 
     //애니메이션 업데이트
-    animator->UpdateAnimation(deltaTime);
-
+    animator->UpdateAnimation(deltaTime);*/
+    
+    player->update(deltaTime);
     currCamera->Update();
 }
 
 void mainInit() {
     CreateShader();
-
+    
     //빛
     directionalLight = new DirectionalLight(0.5f, 1.f,
         glm::vec4(1.f, 1.f, 1.f, 1.f),
@@ -243,7 +216,7 @@ void mainInit() {
     // Model loading
     mainModel = new Model();
     std::string modelPath = "Knight/test.gltf";
-    //std::string modelPath = "Bot/bot_run.gltf";
+    //std::string modelPath = "obj/test.gltf";
     mainModel->LoadModel(modelPath);
     entityList.push_back(mainModel);
     currModel = mainModel;
@@ -255,28 +228,30 @@ void mainInit() {
     glm::vec3 newRot(newRotx, currRot[1], currRot[2]);
     mainModel->SetRotate(newRot);
 
+    cube = new Model();
+    modelPath = "obj/test.gltf";
+    cube->LoadModel(modelPath);
+    entityList.push_back(cube);
+
+    animator = new Animator(nullptr);
+
     //플레이어 연결
-    player = new Player(mainModel);
+    player = new Player(mainModel,animator);
 
     freeCamera = new FreeCamera(glm::vec3(0.f, 0.f, 2.f), 100.f, 0.3f);
     playerCamera = new PlayerCamera(player);
     currCamera = freeCamera;
 
-    //GLfloat initialPitch = 0.f;
-    //GLfloat initialYaw = -90.f; // 카메라가 -z축을 보고 있도록
-    //camera = new Camera(glm::vec3(0.f, 0.f, 20.f), glm::vec3(0.f, 1.f, 0.f), initialYaw, initialPitch, 10.f, 0.3f);
-
-    //idleAnim = new Animation("robot_run.fbx", currModel);
-    //idleAnim = new Animation("Bot/bot_run.gltf", currModel);
-    idleAnim = new Animation("Knight/idle.gltf", currModel);
+    
+    /*idleAnim = new Animation("Knight/idle.gltf", currModel);
     danceAnim = new Animation("Knight/dance.gltf", currModel);
-    runAnim = new Animation("Knight/run.gltf", currModel);
+    runAnim = new Animation("Knight/run.gltf", currModel);*/
 
-    animator = new Animator(nullptr);
 }
 
 GLvoid render()
 {
+    
     update();
     
     GLfloat now = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
@@ -293,7 +268,6 @@ GLvoid render()
 
     //무언가 바인드
 
-
     glm::mat4 viewMat = currCamera->GetViewMatrix();
     glm::mat4 projMat = currCamera->GetProjectionMatrix(1280, 720);
     glm::vec3 camPos = currCamera->GetPosition();
@@ -307,20 +281,20 @@ GLvoid render()
     terrain->GetShader()->UseEyePos(camPos);
     terrain->DrawTerrain(viewMat, projMat);*/
 
-
-    shaderList[0]->UseShader();
-    {
+    //전체가 플레이어 그리기
+    
+    
+    player->draw(currCamera, directionalLight, pointLights, pointLightCount);
+    /*{
         GetShaderHandles();
 
         Model* currModel = mainModel;
 
-        glm::mat4 modelMat = currModel->GetModelMat();
+        glm::mat4 modelMat = mainModel->GetModelMat();
         glm::mat4 PVM = projMat * viewMat * modelMat;
         glm::mat3 normalMat = GetNormalMat(modelMat);
 
         glUniformMatrix4fv(loc_modelMat, 1, GL_FALSE, glm::value_ptr(modelMat));
-
-
         glUniformMatrix4fv(loc_PVM, 1, GL_FALSE, glm::value_ptr(PVM));
         glUniformMatrix3fv(loc_normalMat, 1, GL_FALSE, glm::value_ptr(normalMat));
 
@@ -336,7 +310,6 @@ GLvoid render()
         glUniform1i(loc_diffuseSampler, 0);
         glUniform1i(loc_normalSampler, 1);
 
-
         mainModel->RenderModel();
 
         GLenum error = glGetError();
@@ -344,8 +317,40 @@ GLvoid render()
         {
             std::cout << "error : " << error << std::endl;
         }
-    }
+    }*/
+    shaderList[0]->UseShader();
+    {
+       GetShaderHandles();
 
+        glm::mat4 modelMat = cube->GetModelMat();
+        glm::mat4 PVM = projMat * viewMat * modelMat;
+        glm::mat3 normalMat = GetNormalMat(modelMat);
+
+        glUniformMatrix4fv(loc_modelMat, 1, GL_FALSE, glm::value_ptr(modelMat));
+        glUniformMatrix4fv(loc_PVM, 1, GL_FALSE, glm::value_ptr(PVM));
+        glUniformMatrix3fv(loc_normalMat, 1, GL_FALSE, glm::value_ptr(normalMat));
+
+        shaderList[0]->UseEyePos(camPos);
+        shaderList[0]->UseDirectionalLight(directionalLight);
+        shaderList[0]->UsePointLights(pointLights, pointLightCount);
+
+        shaderList[0]->UseMaterial(cube->GetMaterial());
+
+        /*const auto& transforms = animator->GetFinalBoneMatrices();
+        shaderList[0]->UseFinalBoneMatrices(transforms);*/
+
+        glUniform1i(loc_diffuseSampler, 0);
+        glUniform1i(loc_normalSampler, 1);
+
+        cube->RenderModel();
+
+        GLenum error = glGetError();
+        if (error != GL_NO_ERROR)
+        {
+            std::cout << "error : " << error << std::endl;
+        }
+    }
+   
 
     glutSwapBuffers();  // Swap buffers to render
 }

@@ -265,7 +265,7 @@ void Model::LoadMaterials(const aiScene* scene)
 void Model::LoadDiffuseMaps(aiMaterial* material, const size_t& i)
 {
 	// Diffuse 텍스쳐가 존재하는 지 먼저 확인
-	//if (material->GetTextureCount(aiTextureType_DIFFUSE))
+	if (material->GetTextureCount(aiTextureType_DIFFUSE))
 	{
 		printf("road");
 		aiString texturePath;
