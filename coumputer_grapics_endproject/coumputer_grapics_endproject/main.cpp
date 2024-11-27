@@ -44,10 +44,10 @@ GLfloat deltaTime = 0.f;
 GLfloat lastTime = 0.f;
 
 // Vertex Shader
-static const char* vShaderPath = "vertex.glsl";
+static const char* vShaderPath = "Shader/vertex.glsl";
 
 // Fragment Shader
-static const char* fShaderPath = "fragment.glsl";
+static const char* fShaderPath = "Shader/fragment.glsl";
 
 std::vector<Mesh*> meshList;
 std::vector<Shader*> shaderList;
@@ -114,8 +114,9 @@ void processKeyboard(unsigned char key, int x, int y) {
     if (key_f1) {
         currCamera->KeyControl(key, deltaTime);
     }
-    player->HandleInput(key,1, deltaTime);
-
+    else {
+        player->HandleInput(key,1, deltaTime);
+    }
     if (key == '1') {
         if (animator->GetCurrAnimation() != idleAnim)
             animator->PlayAnimation(idleAnim);
@@ -144,6 +145,7 @@ void SpecialKeyboard(int key, int x, int y) {
         key_f1 = !key_f1;
         break;
     case GLUT_KEY_F2:
+        key_f1 = 0;
         currCamera = playerCamera;
         break;
     case GLUT_KEY_F3:
@@ -189,6 +191,7 @@ void handleResize(int w, int h) {
 }
 
 void update() {
+
     if (player->Move(deltaTime))
     {
         if (animator->GetCurrAnimation() != runAnim)

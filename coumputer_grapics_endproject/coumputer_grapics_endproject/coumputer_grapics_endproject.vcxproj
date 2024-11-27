@@ -63,6 +63,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="fragment.glsl" />
+    <None Include="Shader\fragment.glsl" />
+    <None Include="Shader\vertex.glsl" />
+    <None Include="Skybox.frag" />
+    <None Include="Skybox.vert" />
     <None Include="vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
