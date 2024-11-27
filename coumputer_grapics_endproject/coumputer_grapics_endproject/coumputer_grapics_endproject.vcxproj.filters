@@ -63,6 +63,12 @@
     <ClCompile Include="FrameBuffer.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerCamera.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vertex.h">
@@ -122,14 +128,12 @@
     <ClInclude Include="Animation.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="..\..\..\..\assimp\lib\assimp-vc143-mt.lib">
-      <Filter>소스 파일</Filter>
-    </Library>
-    <Library Include="..\..\..\..\assimp\lib\assimp-vc143-mtd.lib">
-      <Filter>소스 파일</Filter>
-    </Library>
+    <ClInclude Include="Player.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerCamera.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="vertex.glsl">
@@ -138,5 +142,13 @@
     <None Include="fragment.glsl">
       <Filter>소스 파일</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\..\..\..\Users\LDJ\Pictures\assimp\lib\assimp-vc143-mt.lib">
+      <Filter>소스 파일</Filter>
+    </Library>
+    <Library Include="..\..\..\..\..\Users\LDJ\Pictures\assimp\lib\assimp-vc143-mtd.lib">
+      <Filter>소스 파일</Filter>
+    </Library>
   </ItemGroup>
 </Project>

@@ -23,17 +23,21 @@
 #include "FreeCamera.h"
 #include "DirectionalLight.h"
 #include "PointLight.h"
+#include "Player.h"
+#include "PlayerCamera.h"
 
 #define WIDTH 1280
 #define HEIGHT 720
 
 int lastX, lastY;
+bool key_f1 = 1;
 
 // Global variables
 Window* mainWindow;
 //Camera* camera;
 CameraBase* currCamera;
 FreeCamera* freeCamera;
+PlayerCamera* playerCamera;
 
 
 GLfloat deltaTime = 0.f;
@@ -54,9 +58,12 @@ std::vector<Entity*> entityList;
 Model* mainModel;
 Model* currModel;
 
+Player* player;
+
 Animator* animator;
 
 Animation* idleAnim;
+Animation* danceAnim;
 Animation* runAnim;
 
 DirectionalLight* directionalLight;
@@ -102,24 +109,53 @@ void GetShaderHandles()
 
 void TimerFunction(int value);
 
+//키보드 눌림 함수
 void processKeyboard(unsigned char key, int x, int y) {
-    currCamera->KeyControl(key, deltaTime);
+    if (key_f1) {
+        currCamera->KeyControl(key, deltaTime);
+    }
+    player->HandleInput(key,1, deltaTime);
+
     if (key == '1') {
         if (animator->GetCurrAnimation() != idleAnim)
             animator->PlayAnimation(idleAnim);
     }
     if (key == '2') {
+        if (animator->GetCurrAnimation() != danceAnim)
+            animator->PlayAnimation(danceAnim);
+    }
+    if (key == '3') {
         if (animator->GetCurrAnimation() != runAnim)
             animator->PlayAnimation(runAnim);
+    }
+
+}
+//키보드 떼어짐 함수
+void processKeyboardUp(unsigned char key, int x, int y) {
+    player->HandleInput(key, 0, deltaTime);
+    if (key == 'w') {
+        
+    }
+}
+
+void SpecialKeyboard(int key, int x, int y) {
+    switch (key) {
+    case GLUT_KEY_F1:
+        key_f1 = !key_f1;
+        break;
+    case GLUT_KEY_F2:
+        currCamera = playerCamera;
+        break;
+    case GLUT_KEY_F3:
+        currCamera = freeCamera;
+        break;
     }
 }
 
 void MoveCamera()
 {
     //currCamera->KeyControl(mainWindow->getsKeys(), deltaTime);
-
     //currCamera->ScrollControl(mainWindow->GetScrollYChange());
-    currCamera->Update();
 }
 
 bool click = 0;
@@ -152,9 +188,28 @@ void handleResize(int w, int h) {
     glViewport(0, 0, w, h);
 }
 
+void update() {
+    if (player->Move(deltaTime))
+    {
+        if (animator->GetCurrAnimation() != runAnim)
+            animator->PlayAnimation(runAnim);
+    }
+    else
+    {
+        if (animator->GetCurrAnimation() != idleAnim)
+            animator->PlayAnimation(idleAnim);
+    }
+
+    //애니메이션 업데이트
+    animator->UpdateAnimation(deltaTime);
+
+    currCamera->Update();
+}
+
 GLvoid render()
 {
-
+    update();
+    
     GLfloat now = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
     deltaTime = now - lastTime;
     lastTime = now;
@@ -168,8 +223,6 @@ GLvoid render()
     glEnable(GL_DEPTH_TEST);
 
     //무언가 바인드
-
-    animator->UpdateAnimation(deltaTime);
 
 
     glm::mat4 viewMat = currCamera->GetViewMatrix();
@@ -264,12 +317,6 @@ int main(int argc, char** argv)
     for (int i = 0; i < pointLightCount; i++)
         entityList.push_back(pointLights[i]);
 
-    // Camera setup
-    //GLfloat initialPitch = 0.f;
-    //GLfloat initialYaw = 90.f; // Camera starts facing -z axis
-    //camera = new Camera(glm::vec3(0.f, 100.f, 0.f), glm::vec3(0.f, 1.f, 0.f), initialYaw, initialPitch, 5.f, 0.3f);
-
-
     // Model loading
     mainModel = new Model();
     std::string modelPath = "Knight/test.gltf";
@@ -278,16 +325,18 @@ int main(int argc, char** argv)
     entityList.push_back(mainModel);
     currModel = mainModel;
 
+    //모델 90도 회전
     GLfloat* currRot = mainModel->GetRotate();
     float rotation = 90;
-
     float newRotx = currRot[0] + rotation;
     glm::vec3 newRot(newRotx, currRot[1], currRot[2]);
-
     mainModel->SetRotate(newRot);
 
+    //플레이어 연결
+    player = new Player(mainModel);
+
     freeCamera = new FreeCamera(glm::vec3(0.f, 0.f, 2.f), 100.f, 0.3f);
-    //playerCamera = new PlayerCamera(player);
+    playerCamera = new PlayerCamera(player);
     currCamera = freeCamera;
 
     //GLfloat initialPitch = 0.f;
@@ -297,7 +346,8 @@ int main(int argc, char** argv)
     //idleAnim = new Animation("robot_run.fbx", currModel);
     //idleAnim = new Animation("Bot/bot_run.gltf", currModel);
     idleAnim = new Animation("Knight/idle.gltf", currModel);
-    runAnim = new Animation("Knight/dance.gltf", currModel);
+    danceAnim = new Animation("Knight/dance.gltf", currModel);
+    runAnim = new Animation("Knight/run.gltf", currModel);
 
     animator = new Animator(nullptr);
 
@@ -309,9 +359,10 @@ int main(int argc, char** argv)
     // Set callbacks
     glutDisplayFunc(render);
     glutReshapeFunc(handleResize);
-
+    glutSpecialFunc(SpecialKeyboard);
     glutMouseFunc(Mouse);
     glutKeyboardFunc(processKeyboard);
+    glutKeyboardUpFunc(processKeyboardUp);
     glutPassiveMotionFunc(processMouse);
     glutMotionFunc(Motion);
     //glutTimerFunc(1, TimerFunction, 1);

@@ -30,6 +30,8 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="Player.cpp" />
+    <ClCompile Include="PlayerCamera.cpp" />
     <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="ScenePanel.cpp" />
     <ClCompile Include="Shader.cpp" />
@@ -51,6 +53,8 @@
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="Player.h" />
+    <ClInclude Include="PlayerCamera.h" />
     <ClInclude Include="ScenePanel.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="stb_image.h" />
@@ -58,12 +62,12 @@
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\..\..\..\assimp\lib\assimp-vc143-mt.lib" />
-    <Library Include="..\..\..\..\assimp\lib\assimp-vc143-mtd.lib" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="fragment.glsl" />
     <None Include="vertex.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\..\..\..\Users\LDJ\Pictures\assimp\lib\assimp-vc143-mt.lib" />
+    <Library Include="..\..\..\..\..\Users\LDJ\Pictures\assimp\lib\assimp-vc143-mtd.lib" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
