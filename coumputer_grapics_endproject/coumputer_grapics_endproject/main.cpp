@@ -160,20 +160,6 @@ void handleResize(int w, int h) {
 //--------------------------------
 
 void update() {
-
-    /*if (player->Move(deltaTime))
-    {
-        if (animator->GetCurrAnimation() != runAnim)
-            animator->PlayAnimation(runAnim);
-    }
-    else
-    {
-        if (animator->GetCurrAnimation() != idleAnim)
-            animator->PlayAnimation(idleAnim);
-    }
-
-    //애니메이션 업데이트
-    animator->UpdateAnimation(deltaTime);*/
     
     player->update(deltaTime);
     currCamera->Update();

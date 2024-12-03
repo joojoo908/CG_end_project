@@ -1,15 +1,10 @@
-﻿  Player.cpp
-C:\cooding\Github\CG_last_project\coumputer_grapics_endproject\coumputer_grapics_endproject\Animation.h(30,37): warning C4244: 'return': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-  (소스 파일 'Player.cpp'을(를) 컴파일하는 중)
-  
-  main.cpp
+﻿  main.cpp
 C:\cooding\Github\CG_last_project\coumputer_grapics_endproject\coumputer_grapics_endproject\Animation.h(30,37): warning C4244: 'return': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 'main.cpp'을(를) 컴파일하는 중)
   
 C:\cooding\Github\CG_last_project\coumputer_grapics_endproject\coumputer_grapics_endproject\main.cpp(133,25): warning C4244: '초기화 중': 'int'에서 'GLfloat'(으)로 변환하면서 데이터가 손실될 수 있습니다.
 C:\cooding\Github\CG_last_project\coumputer_grapics_endproject\coumputer_grapics_endproject\main.cpp(134,25): warning C4244: '초기화 중': 'int'에서 'GLfloat'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\cooding\Github\CG_last_project\coumputer_grapics_endproject\coumputer_grapics_endproject\main.cpp(203,23): warning C4018: '<': signed 또는 unsigned가 일치하지 않습니다.
-  코드를 생성하고 있습니다...
+C:\cooding\Github\CG_last_project\coumputer_grapics_endproject\coumputer_grapics_endproject\main.cpp(189,23): warning C4018: '<': signed 또는 unsigned가 일치하지 않습니다.
   coumputer_grapics_endproject.vcxproj -> C:\cooding\Github\CG_last_project\coumputer_grapics_endproject\x64\Debug\coumputer_grapics_endproject.exe
   'pwsh.exe'은(는) 내부 또는 외부 명령, 실행할 수 있는 프로그램, 또는
   배치 파일이 아닙니다.

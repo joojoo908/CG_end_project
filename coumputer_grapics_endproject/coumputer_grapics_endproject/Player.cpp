@@ -122,10 +122,13 @@ void Player::Jump()
 
 void Player::update(float deltaTime) {
 	
-	if (Move(deltaTime)) {
+	if (Move(deltaTime))
+	{
 		if (animator->GetCurrAnimation() != runAnim)
 			animator->PlayAnimation(runAnim);
-
+	}
+	else
+	{
 		if (animator->GetCurrAnimation() != idleAnim)
 			animator->PlayAnimation(idleAnim);
 	}
